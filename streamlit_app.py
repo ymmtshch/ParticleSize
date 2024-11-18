@@ -4,7 +4,7 @@ import numpy as np
 import csv
 from PIL import Image
 import tempfile
-import shutil
+import io
 
 # グローバル変数
 excluded_indices = []
@@ -40,10 +40,11 @@ def draw_circles(image, circles, excluded_indices):
 st.title("粒子検出・サイズ測定アプリ")
 st.sidebar.header("設定")
 
-output_csv = st.sidebar.text_input("結果のCSVファイル名", "output_results.csv")
-
 # 複数画像のアップロード
 uploaded_files = st.file_uploader("JPG/PNG画像をアップロードしてください", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+
+# 結果の CSV を保持するためのリスト
+csv_data = []
 
 if uploaded_files:
     for idx, uploaded_file in enumerate(uploaded_files):
@@ -78,29 +79,28 @@ if uploaded_files:
                 st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
                          caption="粒子選択後")
 
-                # 保存オプション
-                if st.button(f"{uploaded_file.name} の結果を保存"):
-                    diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
-                    with open(output_csv, mode='a', newline='') as file:  # 追記モードに変更
-                        writer = csv.writer(file)
-                        if file.tell() == 0:  # ファイルが空の場合、ヘッダーを書き込む
-                            writer.writerow(["Image", "Particle Index", "Diameter (pixels)"])
-                        for idx, diameter in enumerate(diameters):
-                            writer.writerow([uploaded_file.name, idx, f"{diameter:.2f}"])
-                    st.success(f"{uploaded_file.name} の結果が {output_csv} に保存されました。")
+                # CSVデータを更新
+                diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
+                for idx, diameter in enumerate(diameters):
+                    csv_data.append([uploaded_file.name, idx, f"{diameter:.2f}"])
+
         else:
             st.warning(f"{uploaded_file.name} では円が検出されませんでした。")
-
-# 保存されたCSVファイルをダウンロードボタンで提供
-csv_file_path = output_csv  # 保存したCSVファイルのパス
-
-if os.path.exists(csv_file_path):
-    with open(csv_file_path, "rb") as file:
-        st.download_button(
-            label="CSVファイルをダウンロード",
-            data=file,
-            file_name=csv_file_path,
-            mime="text/csv"
-        )
 else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
+
+# CSVダウンロードボタン
+if csv_data:
+    # CSVデータを文字列に変換
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Image", "Particle Index", "Diameter (pixels)"])  # ヘッダー行
+    writer.writerows(csv_data)
+
+    # ダウンロード用のCSVファイルを提供
+    st.download_button(
+        label="結果をCSVとしてダウンロード",
+        data=output.getvalue(),
+        file_name="output_results.csv",
+        mime="text/csv"
+    )
