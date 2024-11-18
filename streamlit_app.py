@@ -15,7 +15,7 @@ def detect_circles(image):
     height, _ = image.shape[:2]
     cropped_image = image[0:int(height * 7 / 8), :]
     gray = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (9, 9), 2)
+    blurred = cv2.GussianBlur(gray, (9, 9), 2)
     detected_circles = cv2.HoughCircles(
         blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20,
         param1=50, param2=30, minRadius=5, maxRadius=50
@@ -38,14 +38,7 @@ def draw_circles(image, circles, excluded_indices):
 # Streamlitでクリックをエミュレート
 def display_image_with_click(image, width=700, key_prefix="image"):
     st.image(image, caption="クリックして粒子を選択/解除してください", use_column_width=False, width=width)
-    coords = st.text_input(f"クリック座標 (例: 100,200):", "", key=f"{key_prefix}_coords")
-    if coords:
-        try:
-            x, y = map(int, coords.split(","))
-            return {"x": x, "y": y}
-        except ValueError:
-            st.error("座標の形式が正しくありません。x,y の形式で入力してください。")
-    return None
+    return st
 
 # Streamlit アプリ
 st.title("粒子検出・サイズ測定アプリ")
@@ -73,19 +66,22 @@ if uploaded_files:
 
             # Streamlitでのクリック処理
             annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
-            coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), key_prefix=f"file_{idx}")
+            display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), key_prefix=f"file_{idx}")
 
+            coords = st.text_input(f"クリック座標 (例: 100,200) (画像上の座標を手動で入力)", "")
             if coords:
-                for i, (cx, cy, r) in enumerate(detected_circles):
-                    # 円の内側クリックでトグル処理
-                    if (cx - coords["x"])**2 + (cy - coords["y"])**2 <= r**2:
-                        if i in excluded_indices:
-                            excluded_indices.remove(i)
-                        else:
-                            excluded_indices.append(i)
-
-            st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
-                     caption="粒子検出後")
+                try:
+                    x, y = map(int, coords.split(","))
+                    # 座標をもとに粒子を選択/解除
+                    for i, (cx, cy, r) in enumerate(detected_circles):
+                        if (cx - x) ** 2 + (cy - y) ** 2 <= r ** 2:
+                            if i in excluded_indices:
+                                excluded_indices.remove(i)
+                            else:
+                                excluded_indices.append(i)
+                    st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB), caption="粒子検出後")
+                except ValueError:
+                    st.error("座標の形式が正しくありません。x,y の形式で入力してください。")
 
             # 保存オプション
             if st.button(f"{uploaded_file.name} の結果を保存"):
