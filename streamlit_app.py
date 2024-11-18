@@ -85,9 +85,11 @@ if uploaded_files:
                          caption="粒子選択後")
 
                 # 除外された粒子をCSVデータに反映（除外された粒子はCSVに追加しない）
-                diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
-                for idx, diameter in enumerate(diameters):
-                    csv_data.append([uploaded_file.name, idx, f"{diameter:.2f}"])
+                for i, (x, y, r) in enumerate(detected_circles):
+                    # `excluded_indices` に含まれるインデックスを除外してCSVに追加
+                    if i not in excluded_indices:
+                        diameter = 2 * r
+                        csv_data.append([uploaded_file.name, i, f"{diameter:.2f}"])
 
         else:
             st.warning(f"{uploaded_file.name} では円が検出されませんでした。")
