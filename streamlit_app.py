@@ -36,9 +36,9 @@ def draw_circles(image, circles, excluded_indices):
     return output_image
 
 # Streamlitでクリックをエミュレート
-def display_image_with_click(image, width=700):
+def display_image_with_click(image, width=700, key_prefix="image"):
     st.image(image, caption="クリックして粒子を選択/解除してください", use_column_width=False, width=width)
-    coords = st.text_input("クリック座標 (例: 100,200):", "")
+    coords = st.text_input(f"クリック座標 (例: 100,200):", "", key=f"{key_prefix}_coords")
     if coords:
         try:
             x, y = map(int, coords.split(","))
@@ -48,16 +48,8 @@ def display_image_with_click(image, width=700):
     return None
 
 # Streamlit アプリ
-st.title("粒子検出・サイズ測定アプリ")
-st.sidebar.header("設定")
-
-output_csv = st.sidebar.text_input("結果のCSVファイル名", "output_results.csv")
-
-# 複数画像のアップロード
-uploaded_files = st.file_uploader("JPG/PNG画像をアップロードしてください", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
-
 if uploaded_files:
-    for uploaded_file in uploaded_files:
+    for idx, uploaded_file in enumerate(uploaded_files):
         # アップロードされたファイルを一時保存して処理
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file.write(uploaded_file.read())
@@ -73,7 +65,7 @@ if uploaded_files:
 
             # Streamlitでのクリック処理
             annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
-            coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB))
+            coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), key_prefix=f"file_{idx}")
 
             if coords:
                 for i, (cx, cy, r) in enumerate(detected_circles):
