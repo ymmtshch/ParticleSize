@@ -1,3 +1,5 @@
+### 粒径検出 ###
+
 import streamlit as st
 import cv2
 import numpy as np
@@ -100,3 +102,30 @@ if uploaded_file:
         st.warning("円が検出されませんでした。")
 else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
+
+### グラフ化 ###
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# 仮のデータフレーム（実際にはcsvから読み込む）
+# data = pd.read_csv('output_results.csv')
+
+# 必要な列のみを仮定して作成
+# others['scaled'] = 何らかのスケーリング後のデータ
+
+# データの範囲を取得
+min_value = others['scaled'].min()
+max_value = others['scaled'].max()
+
+# データ範囲に基づいてbinwidthを自動的に計算
+binwidth = (max_value - min_value) / 30  # 30ビンに分ける場合の例
+
+# 可視化
+sns.set(style="whitegrid")
+g = sns.FacetGrid(others, col="sample", col_wrap=1, height=4, aspect=1.5)
+g.map_dataframe(sns.histplot, x="scaled", binwidth=binwidth, kde=False, stat="density", color="skyblue")
+
+g.set_axis_labels("PID size [nm]", "Density")
+g.set_titles("{col_name}")
+plt.show()
