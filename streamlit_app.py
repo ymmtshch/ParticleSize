@@ -37,18 +37,6 @@ def draw_circles(image, circles, excluded_indices):
         cv2.putText(output_image, str(i), (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
     return output_image
 
-# Streamlitでクリックをエミュレート
-def display_image_with_click(image, width=700):
-    st.image(image, caption="クリックして粒子を選択/解除してください", use_column_width=False, width=width)
-    coords = st.text_input("クリック座標 (例: 100,200):", "")
-    if coords:
-        try:
-            x, y = map(int, coords.split(","))
-            return {"x": x, "y": y}
-        except ValueError:
-            st.error("座標の形式が正しくありません。x,y の形式で入力してください。")
-    return None
-
 # Streamlit アプリ
 st.title("粒子検出・サイズ測定アプリ")
 st.sidebar.header("設定")
@@ -74,21 +62,29 @@ if uploaded_files:
         if detected_circles is not None:
             st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
 
-            # Streamlitでのクリック処理
+            # 粒子検出結果を描画
             annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
-            coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB))
+            st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="粒子検出後")
 
-            if coords:
-                for i, (cx, cy, r) in enumerate(detected_circles):
-                    # 円の内側クリックでトグル処理
-                    if (cx - coords["x"])**2 + (cy - coords["y"])**2 <= r**2:
-                        if i in excluded_indices:
-                            excluded_indices.remove(i)
-                        else:
-                            excluded_indices.append(i)
+            # 粒子番号を使った選択/解除
+            selected_particle = st.text_input(f"{uploaded_file.name} - 粒子番号を入力してください (例: 0,1,2):", "")
+            if st.button("選択を更新", key=uploaded_file.name):
+                if selected_particle:
+                    try:
+                        indices = [int(i) for i in selected_particle.split(",")]
+                        for i in indices:
+                            if i < len(detected_circles):
+                                if i in excluded_indices:
+                                    excluded_indices.remove(i)
+                                else:
+                                    excluded_indices.append(i)
+                        st.success("選択が更新されました。")
+                    except ValueError:
+                        st.error("入力が正しくありません。数字をカンマ区切りで入力してください。")
 
-            st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
-                     caption="粒子検出後")
+            # 更新後の画像を再描画
+            updated_image = draw_circles(processed_image, detected_circles, excluded_indices)
+            st.image(cv2.cvtColor(updated_image, cv2.COLOR_BGR2RGB), caption="更新後の粒子検出結果")
 
             # 保存用データ収集
             diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
@@ -107,6 +103,7 @@ if uploaded_files:
             st.success(f"結果が {output_csv} に保存されました。")
 else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
+
 
 
 
