@@ -59,9 +59,7 @@ if uploaded_files:
         processed_image, detected_circles = detect_circles(original_image)
 
         if detected_circles is not None:
-            st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
-
-            # 粒子検出結果を描画
+            # 粒子検出後の画像を描画
             all_particle_indices = list(range(len(detected_circles)))
             excluded_indices = st.multiselect(
                 f"{uploaded_file.name} - 除外したい粒子番号を選択してください:",
@@ -69,9 +67,9 @@ if uploaded_files:
                 default=[]
             )
 
-            # 選択結果に基づいて画像を再描画
-            updated_image = draw_circles(processed_image, detected_circles, excluded_indices)
-            st.image(cv2.cvtColor(updated_image, cv2.COLOR_BGR2RGB), caption="更新後の粒子検出結果")
+            # 選択状態に基づき画像を描画
+            annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
+            st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="粒径検出後の画像")
 
             # 保存用データ収集
             diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
@@ -90,6 +88,7 @@ if uploaded_files:
             st.success(f"結果が {output_csv} に保存されました。")
 else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
+
 
 
 ### グラフ化 ###
