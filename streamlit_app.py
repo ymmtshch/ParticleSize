@@ -104,29 +104,70 @@ else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
 
 ### グラフ化 ###
+import streamlit as st
 import pandas as pd
-import seaborn as sns
+import re
 import matplotlib.pyplot as plt
+import seaborn as sns
+import io
 
-# 仮のデータフレーム（実際にはcsvから読み込む）
-# data = pd.read_csv('output_results.csv')
-
-# 必要な列のみを仮定して作成
-# others['scaled'] = 何らかのスケーリング後のデータ
-
-# データの範囲を取得
-min_value = others['scaled'].min()
-max_value = others['scaled'].max()
-
-# データ範囲に基づいてbinwidthを自動的に計算
-binwidth = (max_value - min_value) / 30  # 30ビンに分ける場合の例
-
-# 可視化
+# スタイル設定
 sns.set(style="whitegrid")
-g = sns.FacetGrid(others, col="sample", col_wrap=1, height=4, aspect=1.5)
-g.map_dataframe(sns.histplot, x="scaled", binwidth=binwidth, kde=False, stat="density", color="skyblue")
 
-g.set_axis_labels("PID size [nm]", "Density")
-g.set_titles("{col_name}")
-plt.show()
+# CSVファイルのアップロード
+uploaded_file = st.file_uploader("CSVファイルをアップロードしてください", type=["csv"])
 
+if uploaded_file:
+    # アップロードされたCSVファイルを読み込む
+    data = pd.read_csv(uploaded_file)
+
+    # "ps"を含む行と含まない行に分割
+    ps = data[data['Image'].str.contains("ps")]
+    others = data[~data['Image'].str.contains("ps")]
+
+    # "Image"列を "sample" と "num" に分割
+    others[['sample', 'num']] = others['Image'].str.split('-', expand=True)
+
+    # スケーリングに使う定数
+    atai = 1.984375
+
+    # PSデータの直径にスケーリングを適用し、平均を計算
+    ps['scaled'] = ps['Diameter (pixels)'] * atai
+    scaling_factor = ps['scaled'].mean(skipna=True)
+
+    # スケーリング値を計算
+    scaling = 152 / scaling_factor
+
+    # 最終スケーリング係数を計算
+    coefficient = scaling * atai
+
+    # 全データにスケーリングを適用
+    others['scaled'] = others['Diameter (pixels)'] * coefficient
+
+    # 結果の表示
+    st.subheader("スケーリング結果")
+    st.write(others[['sample', 'num', 'scaled']])
+
+    # 可視化
+    st.subheader("スケーリング後の粒子サイズの分布")
+    g = sns.FacetGrid(others, col="sample", col_wrap=1, height=4, aspect=1.5)
+    g.map_dataframe(sns.histplot, x="scaled", binwidth=2, kde=False, stat="density", color="skyblue")
+    g.set_axis_labels("PID size [nm]", "Density")
+    g.set_titles("{col_name}")
+    st.pyplot(g)
+
+    # 集計とCVの計算
+    result = others.groupby('sample').agg(
+        平均値=('scaled', 'mean'),
+        標準偏差=('scaled', 'std'),
+    )
+
+    # CVの計算と結果の結合
+    result['CV'] = result['標準偏差'] / result['平均値'] * 100
+
+    # 結果の表示
+    st.subheader("集計結果（平均値、標準偏差、CV）")
+    st.write(result)
+
+else:
+    st.info("CSVファイルをアップロードしてください。")
