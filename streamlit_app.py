@@ -8,7 +8,6 @@ from PIL import Image
 import tempfile
 
 # グローバル変数
-excluded_indices = []
 circles = []
 
 # 画像処理
@@ -63,26 +62,14 @@ if uploaded_files:
             st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
 
             # 粒子検出結果を描画
-            annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
-            st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="粒子検出後")
+            all_particle_indices = list(range(len(detected_circles)))
+            excluded_indices = st.multiselect(
+                f"{uploaded_file.name} - 除外したい粒子番号を選択してください:",
+                all_particle_indices,
+                default=[]
+            )
 
-            # 粒子番号を使った選択/解除
-            selected_particle = st.text_input(f"{uploaded_file.name} - 粒子番号を入力してください (例: 0,1,2):", "")
-            if st.button("選択を更新", key=uploaded_file.name):
-                if selected_particle:
-                    try:
-                        indices = [int(i) for i in selected_particle.split(",")]
-                        for i in indices:
-                            if i < len(detected_circles):
-                                if i in excluded_indices:
-                                    excluded_indices.remove(i)
-                                else:
-                                    excluded_indices.append(i)
-                        st.success("選択が更新されました。")
-                    except ValueError:
-                        st.error("入力が正しくありません。数字をカンマ区切りで入力してください。")
-
-            # 更新後の画像を再描画
+            # 選択結果に基づいて画像を再描画
             updated_image = draw_circles(processed_image, detected_circles, excluded_indices)
             st.image(cv2.cvtColor(updated_image, cv2.COLOR_BGR2RGB), caption="更新後の粒子検出結果")
 
@@ -103,9 +90,6 @@ if uploaded_files:
             st.success(f"結果が {output_csv} に保存されました。")
 else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
-
-
-
 
 
 ### グラフ化 ###
