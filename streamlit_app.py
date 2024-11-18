@@ -70,7 +70,6 @@ if uploaded_file:
     processed_image, detected_circles = detect_circles(original_image)
 
     if detected_circles is not None:
-        # プレビュー画像を上に表示
         st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
 
         # Streamlitでのクリック処理
@@ -86,7 +85,6 @@ if uploaded_file:
                     else:
                         excluded_indices.append(i)
 
-        # プレビュー画像の更新
         st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
                  caption="粒子検出後")
 
