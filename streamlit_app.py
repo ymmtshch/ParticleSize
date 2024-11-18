@@ -4,6 +4,7 @@ import numpy as np
 import csv
 from PIL import Image
 import tempfile
+import shutil
 
 # グローバル変数
 excluded_indices = []
@@ -89,5 +90,17 @@ if uploaded_files:
                     st.success(f"{uploaded_file.name} の結果が {output_csv} に保存されました。")
         else:
             st.warning(f"{uploaded_file.name} では円が検出されませんでした。")
+
+# 保存されたCSVファイルをダウンロードボタンで提供
+csv_file_path = output_csv  # 保存したCSVファイルのパス
+
+if os.path.exists(csv_file_path):
+    with open(csv_file_path, "rb") as file:
+        st.download_button(
+            label="CSVファイルをダウンロード",
+            data=file,
+            file_name=csv_file_path,
+            mime="text/csv"
+        )
 else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
