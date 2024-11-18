@@ -84,10 +84,11 @@ if uploaded_files:
                 st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
                          caption="粒子選択後")
 
-                # 除外された粒子の直径をCSVに反映
-                for i, (x, y, r) in enumerate(detected_circles):
-                    if i in excluded_indices:  # 除外された粒子のみ
-                        csv_data.append([uploaded_file.name, i, f"{2 * r:.2f}"])  # 除外された粒子の情報を追加
+                # 除外された粒子をCSVデータに反映（除外された粒子はCSVに追加しない）
+                diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
+                for idx, diameter in enumerate(diameters):
+                    csv_data.append([uploaded_file.name, idx, f"{diameter:.2f}"])
+
         else:
             st.warning(f"{uploaded_file.name} では円が検出されませんでした。")
 else:
