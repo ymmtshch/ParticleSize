@@ -48,6 +48,14 @@ def display_image_with_click(image, width=700, key_prefix="image"):
     return None
 
 # Streamlit アプリ
+st.title("粒子検出・サイズ測定アプリ")
+st.sidebar.header("設定")
+
+output_csv = st.sidebar.text_input("結果のCSVファイル名", "output_results.csv")
+
+# 複数画像のアップロード
+uploaded_files = st.file_uploader("JPG/PNG画像をアップロードしてください", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+
 if uploaded_files:
     for idx, uploaded_file in enumerate(uploaded_files):
         # アップロードされたファイルを一時保存して処理
