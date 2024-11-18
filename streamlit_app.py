@@ -1,6 +1,5 @@
 import streamlit as st
 import cv2
-import os
 import numpy as np
 import csv
 from io import BytesIO
@@ -12,26 +11,10 @@ st.write("Upload SEM images to detect particles and calculate their diameters.")
 # ファイルアップロード
 uploaded_files = st.file_uploader("Upload your SEM images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-# グローバル変数
-excluded_indices = []
-circles = []
-
-def on_mouse_click(event, x, y, flags, param):
-    global excluded_indices, circles, image_display
-
-    if event == cv2.EVENT_LBUTTONDOWN:
-        for i, (cx, cy, radius) in enumerate(circles):
-            if (cx - x) ** 2 + (cy - y) ** 2 <= radius ** 2:
-                if i in excluded_indices:
-                    excluded_indices.remove(i)
-                else:
-                    excluded_indices.append(i)
-                break
-
 def process_image(image):
-    global excluded_indices, circles
-    excluded_indices = []
-
+    """
+    Processes an image to detect particles and calculate their diameters.
+    """
     height, width = image.shape[:2]
     cropped_image = image[0:int(height * 7 / 8), :]
     gray = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
@@ -43,13 +26,16 @@ def process_image(image):
 
     if detected_circles is not None:
         circles = detected_circles[0, :]
-        diameters = [2 * r for i, (x, y, r) in enumerate(circles) if i not in excluded_indices]
+        diameters = [2 * r for x, y, r in circles]
     else:
         diameters = []
 
     return diameters
 
 def process_uploaded_files(files):
+    """
+    Processes all uploaded images and returns their diameters.
+    """
     results = []
     for uploaded_file in files:
         file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
@@ -62,6 +48,12 @@ def process_uploaded_files(files):
 if st.button("Process Images"):
     if uploaded_files:
         results = process_uploaded_files(uploaded_files)
+        
+        # 結果を表示
+        st.write("### Results")
+        for file_name, diameters in results:
+            st.write(f"**{file_name}**: {len(diameters)} particles detected")
+            st.write(", ".join([f"{d:.2f} pixels" for d in diameters]))
         
         # CSVに保存
         output = BytesIO()
