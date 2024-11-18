@@ -65,7 +65,7 @@ if uploaded_files:
 
             # 画像に粒子番号を表示した画像を作成
             annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
-            st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="粒子番号付き画像")
+            #st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="粒子番号付き画像")
 
             # 粒子番号の選択 UI (複数選択可能)
             particle_count = len(detected_circles)
