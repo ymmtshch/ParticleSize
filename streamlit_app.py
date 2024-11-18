@@ -1,10 +1,7 @@
-pip install opencv-python
-pip install matplotlib
 
-import cv2
-import os
+import streamlit as st
+import pandas as pd
 import numpy as np
-import csv
 import matplotlib.pyplot as plt
 
 # Title of the Streamlit app
