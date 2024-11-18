@@ -69,8 +69,13 @@ if uploaded_files:
             particle_count = len(detected_circles)
 
             if particle_count > 0:
-                # `multiselect`を使用して複数選択
-                selected_particles = st.multiselect("選択または解除したい粒子を選択してください", options=list(range(particle_count)), default=[])
+                # `multiselect`を使用して複数選択、キーで一意に識別
+                selected_particles = st.multiselect(
+                    "選択または解除したい粒子を選択してください", 
+                    options=list(range(particle_count)), 
+                    default=[], 
+                    key=f"select_particles_{idx}"  # 各画像に一意のキーを設定
+                )
 
                 # `excluded_indices` を選択した粒子に合わせて更新
                 excluded_indices = selected_particles
