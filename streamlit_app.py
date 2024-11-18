@@ -65,28 +65,31 @@ if uploaded_files:
 
             # 粒子番号の選択 UI
             particle_count = len(detected_circles)
-            selected_particle = st.selectbox("粒子を選択または解除してください", options=[-1] + list(range(particle_count)), index=-1)
 
-            if selected_particle != -1:
-                if selected_particle in excluded_indices:
-                    excluded_indices.remove(selected_particle)  # 解除
-                else:
-                    excluded_indices.append(selected_particle)  # 選択
+            # 複数選択肢がある場合にのみ selectbox を表示
+            if particle_count > 0:
+                selected_particle = st.selectbox("粒子を選択または解除してください", options=[-1] + list(range(particle_count)), index=-1)
 
-            # 更新された画像の表示
-            st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
-                     caption="粒子選択後")
+                if selected_particle != -1:
+                    if selected_particle in excluded_indices:
+                        excluded_indices.remove(selected_particle)  # 解除
+                    else:
+                        excluded_indices.append(selected_particle)  # 選択
 
-            # 保存オプション
-            if st.button(f"{uploaded_file.name} の結果を保存"):
-                diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
-                with open(output_csv, mode='a', newline='') as file:  # 追記モードに変更
-                    writer = csv.writer(file)
-                    if file.tell() == 0:  # ファイルが空の場合、ヘッダーを書き込む
-                        writer.writerow(["Image", "Particle Index", "Diameter (pixels)"])
-                    for idx, diameter in enumerate(diameters):
-                        writer.writerow([uploaded_file.name, idx, f"{diameter:.2f}"])
-                st.success(f"{uploaded_file.name} の結果が {output_csv} に保存されました。")
+                # 更新された画像の表示
+                st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
+                         caption="粒子選択後")
+
+                # 保存オプション
+                if st.button(f"{uploaded_file.name} の結果を保存"):
+                    diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
+                    with open(output_csv, mode='a', newline='') as file:  # 追記モードに変更
+                        writer = csv.writer(file)
+                        if file.tell() == 0:  # ファイルが空の場合、ヘッダーを書き込む
+                            writer.writerow(["Image", "Particle Index", "Diameter (pixels)"])
+                        for idx, diameter in enumerate(diameters):
+                            writer.writerow([uploaded_file.name, idx, f"{diameter:.2f}"])
+                    st.success(f"{uploaded_file.name} の結果が {output_csv} に保存されました。")
         else:
             st.warning(f"{uploaded_file.name} では円が検出されませんでした。")
 else:
