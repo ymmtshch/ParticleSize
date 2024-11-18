@@ -59,7 +59,11 @@ if uploaded_files:
         processed_image, detected_circles = detect_circles(original_image)
 
         if detected_circles is not None:
-            # 粒子検出後の画像を描画
+            # 1. 粒径検出後の画像を最初に表示
+            annotated_image_initial = draw_circles(processed_image, detected_circles, [])
+            st.image(cv2.cvtColor(annotated_image_initial, cv2.COLOR_BGR2RGB), caption="粒径検出後の画像 (初期)")
+
+            # 2. 除外粒子選択ウィジェットを表示
             all_particle_indices = list(range(len(detected_circles)))
             excluded_indices = st.multiselect(
                 f"{uploaded_file.name} - 除外したい粒子番号を選択してください:",
@@ -67,9 +71,9 @@ if uploaded_files:
                 default=[]
             )
 
-            # 選択状態に基づき画像を描画
-            annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
-            st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="粒径検出後の画像")
+            # 3. 再描画された画像を表示
+            annotated_image_updated = draw_circles(processed_image, detected_circles, excluded_indices)
+            st.image(cv2.cvtColor(annotated_image_updated, cv2.COLOR_BGR2RGB), caption="更新後の粒子検出結果")
 
             # 保存用データ収集
             diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
