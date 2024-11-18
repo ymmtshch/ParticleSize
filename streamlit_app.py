@@ -73,7 +73,7 @@ if uploaded_files:
                 selected_particles = st.multiselect(
                     "選択または解除したい粒子を選択してください", 
                     options=list(range(particle_count)), 
-                    default=[], 
+                    default=excluded_indices,  # 現在除外されている粒子をデフォルト選択
                     key=f"select_particles_{idx}"  # 各画像に一意のキーを設定
                 )
 
