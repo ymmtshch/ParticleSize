@@ -15,7 +15,7 @@ def detect_circles(image):
     height, _ = image.shape[:2]
     cropped_image = image[0:int(height * 7 / 8), :]
     gray = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GussianBlur(gray, (9, 9), 2)
+    blurred = cv2.GaussianBlur(gray, (9, 9), 2)  # 修正: 'GussianBlur'を'GaussianBlur'に変更
     detected_circles = cv2.HoughCircles(
         blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20,
         param1=50, param2=30, minRadius=5, maxRadius=50
