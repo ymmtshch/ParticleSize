@@ -1,22 +1,17 @@
 import streamlit as st
 import cv2
 import numpy as np
-import os
 import csv
 from PIL import Image
+import tempfile
 
 # グローバル変数
 excluded_indices = []
 circles = []
 
-# フォルダとファイル操作
-def get_jpg_files(folder_path):
-    return [f for f in os.listdir(folder_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
-
 # 画像処理
-def detect_circles(image_path):
+def detect_circles(image):
     global circles
-    image = cv2.imread(image_path)
     height, _ = image.shape[:2]
     cropped_image = image[0:int(height * 7 / 8), :]
     gray = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
@@ -56,27 +51,27 @@ def display_image_with_click(image, width=700):
 st.title("粒子検出・サイズ測定アプリ")
 st.sidebar.header("設定")
 
-folder_path = st.sidebar.text_input("画像フォルダのパス", ".")
 output_csv = st.sidebar.text_input("結果のCSVファイル名", "output_results.csv")
 
-# フォルダ内の画像リストを取得
-if folder_path and os.path.exists(folder_path):
-    image_files = get_jpg_files(folder_path)
-else:
-    image_files = []
+# ファイルアップロード
+uploaded_file = st.file_uploader("JPG/PNG画像をアップロードしてください", type=["jpg", "jpeg", "png"])
 
-if image_files:
-    selected_image = st.sidebar.selectbox("画像を選択", image_files)
-    image_path = os.path.join(folder_path, selected_image)
+if uploaded_file:
+    # アップロードされたファイルを一時保存して処理
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        temp_file.write(uploaded_file.read())
+        temp_image_path = temp_file.name
 
-    # 画像を処理
+    # 画像を読み込む
+    original_image = cv2.imread(temp_image_path)
     st.subheader("検出結果")
-    original_image, detected_circles = detect_circles(image_path)
+    processed_image, detected_circles = detect_circles(original_image)
+
     if detected_circles is not None:
         st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
 
         # Streamlitでのクリック処理
-        annotated_image = draw_circles(original_image, detected_circles, excluded_indices)
+        annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
         coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB))
 
         if coords:
@@ -88,7 +83,7 @@ if image_files:
                     else:
                         excluded_indices.append(i)
 
-        st.image(cv2.cvtColor(draw_circles(original_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
+        st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
                  caption="粒子検出後")
 
         # 保存オプション
@@ -98,9 +93,9 @@ if image_files:
                 writer = csv.writer(file)
                 writer.writerow(["Image", "Particle Index", "Diameter (pixels)"])
                 for idx, diameter in enumerate(diameters):
-                    writer.writerow([selected_image, idx, f"{diameter:.2f}"])
+                    writer.writerow([uploaded_file.name, idx, f"{diameter:.2f}"])
             st.success(f"結果が {output_csv} に保存されました。")
     else:
         st.warning("円が検出されませんでした。")
 else:
-    st.warning("有効な画像フォルダパスを指定してください。")
+    st.info("JPGまたはPNG画像をアップロードしてください。")
