@@ -66,9 +66,10 @@ if uploaded_files:
             # 粒子番号の選択 UI
             particle_count = len(detected_circles)
 
-            # 複数選択肢がある場合にのみ selectbox を表示
+            # もし粒子が1つ以上あれば、selectboxを表示
             if particle_count > 0:
-                selected_particle = st.selectbox("粒子を選択または解除してください", options=[-1] + list(range(particle_count)), index=-1)
+                # selectboxのindexは最大でもlen(detected_circles) - 1にする
+                selected_particle = st.selectbox("粒子を選択または解除してください", options=[-1] + list(range(particle_count)), index=0)
 
                 if selected_particle != -1:
                     if selected_particle in excluded_indices:
