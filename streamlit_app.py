@@ -63,19 +63,15 @@ if uploaded_files:
             annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
             st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="粒子番号付き画像")
 
-            # 粒子番号の選択 UI
+            # 粒子番号の選択 UI (複数選択可能)
             particle_count = len(detected_circles)
 
-            # もし粒子が1つ以上あれば、selectboxを表示
             if particle_count > 0:
-                # selectboxのindexは最大でもlen(detected_circles) - 1にする
-                selected_particle = st.selectbox("粒子を選択または解除してください", options=[-1] + list(range(particle_count)), index=0)
+                # `multiselect`を使用して複数選択
+                selected_particles = st.multiselect("選択または解除したい粒子を選択してください", options=list(range(particle_count)), default=[])
 
-                if selected_particle != -1:
-                    if selected_particle in excluded_indices:
-                        excluded_indices.remove(selected_particle)  # 解除
-                    else:
-                        excluded_indices.append(selected_particle)  # 選択
+                # `excluded_indices` を選択した粒子に合わせて更新
+                excluded_indices = selected_particles
 
                 # 更新された画像の表示
                 st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
