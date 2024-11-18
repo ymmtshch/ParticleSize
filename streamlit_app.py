@@ -38,12 +38,14 @@ def draw_circles(image, circles, excluded_indices):
 # Streamlitでクリックをエミュレート
 def display_image_with_click(image, width=700, key_prefix="image"):
     st.image(image, caption="クリックして粒子を選択/解除してください", use_column_width=False, width=width)
-    coords = st.canvas(
-        width=width,
-        height=image.shape[0] * width // image.shape[1],
-        on_click=lambda event: coords(event)
-    )
-    return coords
+    coords = st.text_input(f"クリック座標 (例: 100,200):", "", key=f"{key_prefix}_coords")
+    if coords:
+        try:
+            x, y = map(int, coords.split(","))
+            return {"x": x, "y": y}
+        except ValueError:
+            st.error("座標の形式が正しくありません。x,y の形式で入力してください。")
+    return None
 
 # Streamlit アプリ
 st.title("粒子検出・サイズ測定アプリ")
