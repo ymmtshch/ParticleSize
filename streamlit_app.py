@@ -1,9 +1,9 @@
 import streamlit as st
-from streamlit_image_coordinates import streamlit_image_coordinates
 import cv2
 import numpy as np
 import os
 import csv
+from PIL import Image
 
 # グローバル変数
 excluded_indices = []
@@ -40,6 +40,18 @@ def draw_circles(image, circles, excluded_indices):
         cv2.putText(output_image, str(i), (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
     return output_image
 
+# Streamlitでクリックをエミュレート
+def display_image_with_click(image, width=700):
+    st.image(image, caption="クリックして粒子を選択/解除してください", use_column_width=False, width=width)
+    coords = st.text_input("クリック座標 (例: 100,200):", "")
+    if coords:
+        try:
+            x, y = map(int, coords.split(","))
+            return {"x": x, "y": y}
+        except ValueError:
+            st.error("座標の形式が正しくありません。x,y の形式で入力してください。")
+    return None
+
 # Streamlit アプリ
 st.title("粒子検出・サイズ測定アプリ")
 st.sidebar.header("設定")
@@ -65,7 +77,7 @@ if image_files:
 
         # Streamlitでのクリック処理
         annotated_image = draw_circles(original_image, detected_circles, excluded_indices)
-        coords = streamlit_image_coordinates(st, cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB))
+        coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB))
 
         if coords:
             for i, (cx, cy, r) in enumerate(detected_circles):
