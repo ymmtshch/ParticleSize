@@ -61,7 +61,7 @@ if uploaded_files:
         processed_image, detected_circles = detect_circles(original_image)
 
         if detected_circles is not None and len(detected_circles) > 0:
-            st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
+            #st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
 
             # 画像に粒子番号を表示した画像を作成
             annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
