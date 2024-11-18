@@ -43,7 +43,7 @@ st.sidebar.header("設定")
 output_csv = st.sidebar.text_input("結果のCSVファイル名", "output_results.csv")
 
 # ファイルアップロード
-uploaded_files = st.file_uploader("JPG/PNG画像を複数アップロードしてください", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+uploaded_files = st.file_uploader("JPG/PNG画像を複数アップロードしてください、ps粒子も忘れずに！", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 if uploaded_files:
     results = []
