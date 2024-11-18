@@ -1,3 +1,6 @@
 streamlit
 opencv-python-headless
 numpy
+matplotlib
+seaborn
+pandas
