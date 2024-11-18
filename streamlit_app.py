@@ -37,6 +37,18 @@ def draw_circles(image, circles, excluded_indices):
         cv2.putText(output_image, str(i), (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
     return output_image
 
+# Streamlitでクリックをエミュレート
+def display_image_with_click(image, width=700):
+    st.image(image, caption="クリックして粒子を選択/解除してください", use_column_width=False, width=width)
+    coords = st.text_input("クリック座標 (例: 100,200):", "")
+    if coords:
+        try:
+            x, y = map(int, coords.split(","))
+            return {"x": x, "y": y}
+        except ValueError:
+            st.error("座標の形式が正しくありません。x,y の形式で入力してください。")
+    return None
+
 # Streamlit アプリ
 st.title("粒子検出・サイズ測定アプリ")
 st.sidebar.header("設定")
@@ -58,26 +70,25 @@ if uploaded_file:
     processed_image, detected_circles = detect_circles(original_image)
 
     if detected_circles is not None:
-        # 粒子検出後の画像を先に表示
-        st.image(
-            cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
-            caption="粒子検出後",
-        )
+        # プレビュー画像を上に表示
+        st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
 
-        # 粒子番号で選択/解除
-        all_indices = list(range(len(detected_circles)))
-        excluded_indices = st.multiselect(
-            "除外する粒子を選択してください (番号をクリックで選択/解除)",
-            options=all_indices,
-            default=excluded_indices,
-            help="選択した番号の粒子が除外されます。"
-        )
+        # Streamlitでのクリック処理
+        annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
+        coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB))
 
-        # 粒子選択用画像を後に表示
-        st.image(
-            cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
-            caption="粒子選択のプレビュー"
-        )
+        if coords:
+            for i, (cx, cy, r) in enumerate(detected_circles):
+                # 円の内側クリックでトグル処理
+                if (cx - coords["x"])**2 + (cy - coords["y"])**2 <= r**2:
+                    if i in excluded_indices:
+                        excluded_indices.remove(i)
+                    else:
+                        excluded_indices.append(i)
+
+        # プレビュー画像の更新
+        st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
+                 caption="粒子検出後")
 
         # 保存オプション
         if st.button("結果を保存"):
@@ -92,6 +103,7 @@ if uploaded_file:
         st.warning("円が検出されませんでした。")
 else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
+
 
 
 ### グラフ化 ###
