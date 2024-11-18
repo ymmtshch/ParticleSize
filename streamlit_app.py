@@ -56,51 +56,58 @@ st.sidebar.header("設定")
 output_csv = st.sidebar.text_input("結果のCSVファイル名", "output_results.csv")
 
 # ファイルアップロード
-uploaded_file = st.file_uploader("JPG/PNG画像をアップロードしてください", type=["jpg", "jpeg", "png"])
+uploaded_files = st.file_uploader("JPG/PNG画像を複数アップロードしてください", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-if uploaded_file:
-    # アップロードされたファイルを一時保存して処理
-    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-        temp_file.write(uploaded_file.read())
-        temp_image_path = temp_file.name
+if uploaded_files:
+    results = []
+    for uploaded_file in uploaded_files:
+        # アップロードされたファイルを一時保存して処理
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(uploaded_file.read())
+            temp_image_path = temp_file.name
 
-    # 画像を読み込む
-    original_image = cv2.imread(temp_image_path)
-    st.subheader("検出結果")
-    processed_image, detected_circles = detect_circles(original_image)
+        # 画像を読み込む
+        original_image = cv2.imread(temp_image_path)
+        st.subheader(f"検出結果: {uploaded_file.name}")
+        processed_image, detected_circles = detect_circles(original_image)
 
-    if detected_circles is not None:
-        st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
+        if detected_circles is not None:
+            st.image(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), caption="元画像")
 
-        # Streamlitでのクリック処理
-        annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
-        coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB))
+            # Streamlitでのクリック処理
+            annotated_image = draw_circles(processed_image, detected_circles, excluded_indices)
+            coords = display_image_with_click(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB))
 
-        if coords:
-            for i, (cx, cy, r) in enumerate(detected_circles):
-                # 円の内側クリックでトグル処理
-                if (cx - coords["x"])**2 + (cy - coords["y"])**2 <= r**2:
-                    if i in excluded_indices:
-                        excluded_indices.remove(i)
-                    else:
-                        excluded_indices.append(i)
+            if coords:
+                for i, (cx, cy, r) in enumerate(detected_circles):
+                    # 円の内側クリックでトグル処理
+                    if (cx - coords["x"])**2 + (cy - coords["y"])**2 <= r**2:
+                        if i in excluded_indices:
+                            excluded_indices.remove(i)
+                        else:
+                            excluded_indices.append(i)
 
-        st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
-                 caption="粒子検出後")
+            st.image(cv2.cvtColor(draw_circles(processed_image, detected_circles, excluded_indices), cv2.COLOR_BGR2RGB),
+                     caption="粒子検出後")
 
-        # 保存オプション
-        if st.button("結果を保存"):
+            # 保存用データ収集
             diameters = [2 * r for i, (_, _, r) in enumerate(detected_circles) if i not in excluded_indices]
+            for idx, diameter in enumerate(diameters):
+                results.append([uploaded_file.name, idx, f"{diameter:.2f}"])
+        else:
+            st.warning(f"{uploaded_file.name}: 円が検出されませんでした。")
+
+    # 結果をCSVに保存
+    if results:
+        if st.button("結果を保存"):
             with open(output_csv, mode='w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerow(["Image", "Particle Index", "Diameter (pixels)"])
-                for idx, diameter in enumerate(diameters):
-                    writer.writerow([uploaded_file.name, idx, f"{diameter:.2f}"])
+                writer.writerows(results)
             st.success(f"結果が {output_csv} に保存されました。")
-    else:
-        st.warning("円が検出されませんでした。")
 else:
     st.info("JPGまたはPNG画像をアップロードしてください。")
+
 
 
 
