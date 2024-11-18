@@ -1,5 +1,5 @@
-$ pip install opencv-python
-$ pip install matplotlib
+pip install opencv-python
+pip install matplotlib
 
 import cv2
 import os
