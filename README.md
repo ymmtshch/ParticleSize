@@ -32,6 +32,7 @@
 
 ```bash
 pip install streamlit opencv-python-headless numpy pillow matplotlib seaborn
+```
 
 ### 1. 環境のセットアップ
 以下のコマンドでStreamlitアプリを起動します。
