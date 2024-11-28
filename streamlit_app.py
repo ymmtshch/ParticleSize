@@ -52,7 +52,7 @@ def check_overlap(circles):
             dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
             
             # 重なりの基準：距離が2つの半径の合計より小さい場合
-            if dist < r1 + r2 * 0.8:
+            if dist < r1 + r2 * 0.5:
                 # 重なりがある場合、重心を計算して上の粒子を選ぶ
                 if y1 < y2:  # y座標が小さい方が上にある（画像の上部に位置する）
                     exclude_indices.append(i)  # i番目の粒子を除外
