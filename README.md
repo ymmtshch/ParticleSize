@@ -51,16 +51,16 @@ streamlit run app.py
 3. 平均値、標準偏差、変動係数（CV）を自動計算します。
 
 ### 主要関数の説明
-#### detect_circles(image)
+#### `detect_circles(image)`
 画像から粒子を検出する関数。Hough Circle Transformを用いて円形粒子を検出します。
 
-#### check_overlap(circles)
+#### `check_overlap(circles)`
 粒子間の重なりを判定し、重なっている下の粒子を除外対象とする関数。
 
-#### draw_circles(image, circles, excluded_indices)
+#### `draw_circles(image, circles, excluded_indices)`
 検出した粒子を画像に描画する関数。除外粒子は赤、計測対象粒子は緑で表示されます。
 
-#### process_image(image)
+#### `process_image(image)`
 粒子検出、重なり判定、スケールバー検出を行い、計測対象粒子を選別する関数。
 
 ### 出力例
