@@ -6,6 +6,7 @@ import numpy as np
 import csv
 from PIL import Image
 import tempfile
+import math
 
 # グローバル変数
 circles = []
@@ -34,6 +35,79 @@ def draw_circles(image, circles, excluded_indices):
         color = (0, 0, 255) if i in excluded_indices else (0, 255, 0)
         cv2.circle(output_image, (int(x), int(y)), int(r), color, 2)
         cv2.putText(output_image, str(i), (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+    return output_image
+
+def check_overlap(circles):
+    """
+    粒子間の重なりをチェックし、重なりがある場合は計測対象外として除外する
+    """
+    exclude_indices = []
+    
+    for i, (x1, y1, r1) in enumerate(circles):
+        for j, (x2, y2, r2) in enumerate(circles):
+            if i >= j:  # 重複チェックを避ける
+                continue
+            
+            # 2つの粒子の距離を計算
+            dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+            
+            # 重なりの基準：距離が2つの半径の合計より小さい場合
+            if dist < r1 + r2 * 0.8:
+                # 重なりがある場合、下の粒子（重なりが少ない方）を除外
+                # 重心を計算して上の粒子を選ぶ
+                if r1 > r2:
+                    exclude_indices.append(j)  # j番目の粒子を除外
+                else:
+                    exclude_indices.append(i)  # i番目の粒子を除外
+                
+    return exclude_indices
+
+def process_image(image):
+    """
+    画像から粒子を検出し、重なりをチェックして除外対象を決定
+    """
+    global pixel_to_real_scale
+    results = {"circles": [], "scale_bar": None}
+    
+    # スケールバー検出
+    results["scale_bar"] = detect_scale_bar(image)
+    
+    # 粒子検出
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (9, 9), 2)
+    detected_circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20,
+                                        param1=50, param2=30, minRadius=5, maxRadius=50)
+    if detected_circles is not None:
+        circles = detected_circles[0, :]
+        # 重なりをチェックして除外対象を決定
+        exclude_indices = check_overlap(circles)
+        
+        # 除外対象でない粒子を選定
+        circles = [circle for i, circle in enumerate(circles) if i not in exclude_indices]
+        
+        results["circles"] = circles
+    return results
+
+def render_image_with_results(image, circles, scale_bar=None, excluded_circles=None):
+    """
+    結果を描画し、除外された粒子を赤で表示
+    """
+    output_image = image.copy()
+    if scale_bar:
+        x, y, w, h, real_length_nm = scale_bar
+        cv2.rectangle(output_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        cv2.putText(output_image, f"Scale: {real_length_nm} nm", (x, y - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+    
+    for i, (x, y, r) in enumerate(circles):
+        if i in excluded_circles:
+            # 除外された粒子は赤で描画
+            cv2.circle(output_image, (int(x), int(y)), int(r), (0, 0, 255), 2)
+        else:
+            # 計測対象の粒子は緑で描画
+            cv2.circle(output_image, (int(x), int(y)), int(r), (0, 255, 0), 2)
+        cv2.putText(output_image, str(i), (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+    
     return output_image
 
 # Streamlit アプリ
