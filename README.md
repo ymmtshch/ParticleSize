@@ -1,3 +1,13 @@
+![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Dependencies](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen)
+![Streamlit](https://img.shields.io/badge/streamlit-%E2%AC%9B-orange)
+![Last Commit](https://img.shields.io/github/last-commit/ymmtshch/ParticleSize)
+![GitHub Issues](https://img.shields.io/github/issues/ymmtshch/ParticleSize)
+![GitHub Stars](https://img.shields.io/github/stars/ymmtshch/ParticleSize?style=social)
+![GitHub Forks](https://img.shields.io/github/forks/ymmtshch/ParticleSize?style=social)
+![Maintenance](https://img.shields.io/badge/maintenance-active-brightgreen)
+
 # 粒径測定アプリケーション
 
 このアプリは、画像から粒子を検出し、粒径を計測するためのツールです。Streamlitを使用して、インタラクティブなインターフェースを提供します。粒子の重なりを検出し、計測対象外の粒子を自動的に除外する機能も搭載しています。
